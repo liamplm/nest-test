@@ -8,7 +8,6 @@ import {
 import { Request } from 'express';
 
 import { Observable } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
 
 
 @Injectable()
