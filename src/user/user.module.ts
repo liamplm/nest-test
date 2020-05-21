@@ -1,37 +1,26 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Module, forwardRef } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import * as bcrypt from 'bcrypt';
 
 import { UserController } from './user.controller';
-import { UserSchema, comparePassword, User } from './user.schema';
+import { UserSchema, comparePassword } from './user.schema';
 import { UserService } from './user.service';
-
+import { AuthModule } from '@auth/auth.module';
 
 @Module({
     imports: [
+        ConfigModule,
         MongooseModule.forFeatureAsync([
             {
                 name: 'User',
-                imports: [ConfigModule],
-                inject: [ConfigService],
-                useFactory: (configService: ConfigService) => {
-                    const BCRYPT_SALT_ROUNDS = parseInt(
-                        configService.get('BCRYPT_SALT_ROUNDS'),
-                    );
-                    UserSchema.pre<User>('save', async function(next) {
-                        this.password = await bcrypt.hash(
-                            this.password,
-                            BCRYPT_SALT_ROUNDS,
-                        );
-                        next();
-                    });
+                useFactory: () => {
                     UserSchema.methods.comparePassword = comparePassword;
 
                     return UserSchema;
                 },
             },
         ]),
+        forwardRef(() => AuthModule),
     ],
     controllers: [UserController],
     providers: [UserService],

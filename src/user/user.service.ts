@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 
 import { User } from './user.schema';
 import {
@@ -13,12 +14,22 @@ import {
 } from './user.dto';
 
 import { GetBySizeResponseDTO } from '@dto/get-by-size-response.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel('User') private userModel: Model<User>) {}
+    BCRYPT_SALT_ROUNDS = 10;
+
+    constructor(
+        @InjectModel('User') private userModel: Model<User>,
+        private configService: ConfigService,
+    ) {
+        this.BCRYPT_SALT_ROUNDS = parseInt(this.configService.get('BCRYPT_SALT_ROUNDS'))
+    }
 
     async create(dto: CreateUserDTO): Promise<User> {
+        dto.password = await bcrypt.hash(dto.password, this.BCRYPT_SALT_ROUNDS);
+
         const user = new this.userModel(dto);
 
         let result: User;

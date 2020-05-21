@@ -82,7 +82,8 @@
       "@dto/(.*)": "<rootDir>/src/global/dto/$1",
       "@global/(.*)": "<rootDir>/src/global/$1",
       "@user/(.*)": "<rootDir>/src/user/$1",
-      "@auth/(.*)": "<rootDir>/src/auth/$1"
+      "@auth/(.*)": "<rootDir>/src/auth/$1",
+      "@app/(.*)": "<rootDir>/src/$1"
     },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

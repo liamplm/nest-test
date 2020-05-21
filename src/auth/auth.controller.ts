@@ -1,13 +1,14 @@
-import { Controller, Post, Body, Request, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Validation } from '@pipes/joi-validation/joi-validation.pipe';
 import { AuthLoginDTO, AuthRegisterDTO } from './auth.dto';
+import { JwtStrategy } from './jwt.strategy';
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private authService: AuthService,
-        @Inject('JWT_EXTRACTOR') private JWT_EXTRACTOR
+        private jwtStrategy: JwtStrategy,
     ) {}
 
     @Post('/register')
@@ -18,18 +19,13 @@ export class AuthController {
 
     @Post('/login')
     @Validation(AuthLoginDTO)
-    async login(
-        @Body() dto: AuthLoginDTO,
-        @Request() req: Request
-    ) {
-        const token = this.JWT_EXTRACTOR(req as any);
-
-        if (token) {
+    async login(@Body() dto: AuthLoginDTO, @Request() req: Request) {
+        try {
             return {
-                token
-            }
+                token: this.jwtStrategy.extractTokenFromRequset(req),
+            };
+        } catch (err) {
+            return this.authService.login(dto);
         }
-
-        return this.authService.login(dto)
     }
 }

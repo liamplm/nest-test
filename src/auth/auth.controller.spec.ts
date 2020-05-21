@@ -1,44 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { ExtractJwt } from 'passport-jwt';
-import { UserService } from '@user/user.service';
+import { AuthModule } from './auth.module';
+import { ConfigDynamicModule } from '@app/app.module';
 import { getModelToken } from '@nestjs/mongoose';
-import { JwtService, JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 
 describe('Auth Controller', () => {
     let controller: AuthController;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [
-                JwtModule.registerAsync({
-                    imports: [ConfigModule],
-                    useFactory: async (configService: ConfigService) => ({
-                        secret: configService.get('JWT_SECRET'),
-                    }),
-                    inject: [ConfigService],
-                }),
-            ],
-            controllers: [AuthController],
-            providers: [
-                AuthService,
-                UserService,
-                {
-                    provide: 'JWT_SECRET',
-                    useValue: 'secret',
-                },
-                {
-                    provide: 'JWT_EXTRACTOR',
-                    useValue: ExtractJwt.fromAuthHeaderAsBearerToken(),
-                },
-                {
-                    provide: getModelToken('User'),
-                    useValue: {},
-                },
-            ],
-        }).compile();
+            imports: [ConfigDynamicModule, AuthModule],
+        })
+            .overrideProvider(getModelToken('User'))
+            .useValue({})
+            .compile();
 
         controller = module.get<AuthController>(AuthController);
     });

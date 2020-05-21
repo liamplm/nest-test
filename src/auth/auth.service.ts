@@ -4,20 +4,20 @@ import { AuthLoginDTO, AuthRegisterDTO, AuthValidateUserDTO } from './auth.dto'
 
 import { UserService } from '@user/user.service';
 import { User } from '@user/user.schema';
-import { JwtService } from '@nestjs/jwt';
+import { JwtStrategy } from './jwt.strategy';
 
 
 @Injectable()
 export class AuthService {
     constructor(
         private userService: UserService,
-        private jwtService: JwtService
+        private jwtStrategy: JwtStrategy
     ) {}
 
     async register(dto: AuthRegisterDTO) {
         const user = await this.userService.create(dto);
        
-        return this.getToken(user._id)
+        return this.jwtStrategy.generateToken(user._id)
     }
 
     async login(dto: AuthLoginDTO) {
@@ -26,31 +26,27 @@ export class AuthService {
         user.lastLogin = new Date()
         const [, tokenResult] = await Promise.all([
             user.save(),
-            this.getToken(user._id, user.lastLogin)
+            this.jwtStrategy.generateToken(user._id, user.lastLogin)
         ]);
 
         return tokenResult;
     }
 
-    async getToken(userId: string, iat: Date = new Date()) {
-        return {
-            token: await this.jwtService.signAsync({
-                userId,
-                iat: Math.floor(iat.getTime() / 1000) + 1
-            })
-        }
-    }
-
     async validateUser(dto: AuthValidateUserDTO): Promise<User> {
+        console.log(dto)
         const user = dto.user || await this.userService.getByUsername({
             username: dto.username 
         });
+
+        console.log(user)
 
         if (!user) {
             throw new UnauthorizedException('user validation failed');
         }
 
         const compareResult = await user.comparePassword(dto.password);
+
+        console.log(compareResult)
 
         if (compareResult) {
             return user;

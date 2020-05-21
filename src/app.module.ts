@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AppInterceptor } from './app.interceptor';
 
 import { UserModule } from './user/user.module';
 
@@ -35,37 +34,36 @@ export const AppModuleMetadata: ModuleMetadata = {
         AuthModule,
     ],
     controllers: [AppController],
-    providers: [AppService, AppInterceptor],
+    providers: [AppService],
 };
+
+export const ConfigDynamicModule = ConfigModule.forRoot({
+    isGlobal: true,
+    envFilePath: ['.dev.env', '.env'],
+    validationSchema: Joi.object({
+        NODE_ENV: Joi.string()
+            .valid('development', 'production', 'test', 'provision')
+            .default('development'),
+        PORT: Joi.number()
+            .port()
+            .default(3000),
+        DATABASE_URI: Joi.string().required(),
+        BCRYPT_SALT_ROUNDS: Joi.number()
+            .integer()
+            .positive()
+            .default(10),
+        JWT_SECRET: Joi.string()
+            .min(6)
+            .required(),
+    }),
+    validationOptions: {
+        abortEarly: false,
+        convert: true,
+    },
+});
 
 @Module({
     ...AppModuleMetadata,
-    imports: [
-        ...AppModuleMetadata.imports,
-        ConfigModule.forRoot({
-            envFilePath: ['.dev.env', '.env'],
-            validationSchema: Joi.object({
-                NODE_ENV: Joi.string()
-                    .valid('development', 'production', 'test', 'provision')
-                    .default('development'),
-                PORT: Joi.number()
-                    .port()
-                    .default(3000),
-                DATABASE_URI: Joi.string().required(),
-                BCRYPT_SALT_ROUNDS: Joi.number()
-                    .integer()
-                    .positive()
-                    .default(10),
-                JWT_SECRET: Joi.string()
-                    .min(6)
-                    .required(),
-            }),
-            validationOptions: {
-                abortEarly: false,
-                convert: true,
-            },
-        }),
-
-    ]
+    imports: [...AppModuleMetadata.imports, ConfigDynamicModule],
 })
 export class AppModule {}

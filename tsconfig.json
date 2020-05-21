@@ -14,7 +14,8 @@
         "@dto/*": ["src/global/dto/*"],
         "@global/*": ["src/global/*"],
         "@user/*": ["src/user/*"],
-        "@auth/*": ["src/auth/*"]
+        "@auth/*": ["src/auth/*"],
+        "@app/*": ["src/*"]
     },
     "incremental": true
   },
